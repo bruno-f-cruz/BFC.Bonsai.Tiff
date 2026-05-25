@@ -74,7 +74,10 @@ namespace BFC.Bonsai.Tiff.IO
         }
 
         /// <summary>Writes an <see cref="IplImage"/> as the next page in the TIFF file.</summary>
-        public void WriteFrame(IplImage image)
+        public void WriteFrame(IplImage image) => WriteFrame(image, null);
+
+        /// <summary>Writes an <see cref="IplImage"/> as the next page, embedding optional metadata tags.</summary>
+        public void WriteFrame(IplImage image, TiffMetadata metadata)
         {
             if (_chunkSize.HasValue && _currentFrameIdx >= _chunkSize.Value)
             {
@@ -129,6 +132,9 @@ namespace BFC.Bonsai.Tiff.IO
             {
                 WriteStrips(image, width, height, rowBytes);
             }
+
+            if (metadata != null)
+                ApplyMetadata(metadata);
 
             _tiff.WriteDirectory();
             _currentFrameIdx++;
@@ -218,6 +224,26 @@ namespace BFC.Bonsai.Tiff.IO
 
         /// <inheritdoc/>
         public void Dispose() => CloseCurrentFile();
+
+        private void ApplyMetadata(TiffMetadata meta)
+        {
+            if (meta.Description != null) _tiff.SetField(TiffTag.IMAGEDESCRIPTION, meta.Description);
+            if (meta.Artist != null) _tiff.SetField(TiffTag.ARTIST, meta.Artist);
+            if (meta.Software != null) _tiff.SetField(TiffTag.SOFTWARE, meta.Software);
+            if (meta.Copyright != null) _tiff.SetField(TiffTag.COPYRIGHT, meta.Copyright);
+            if (meta.PageName != null) _tiff.SetField(TiffTag.PAGENAME, meta.PageName);
+            if (meta.DateTime.HasValue)
+                _tiff.SetField(TiffTag.DATETIME,
+                    meta.DateTime.Value.ToString("yyyy:MM:dd HH:mm:ss",
+                        System.Globalization.CultureInfo.InvariantCulture));
+            if (meta.ResolutionX.HasValue) _tiff.SetField(TiffTag.XRESOLUTION, meta.ResolutionX.Value);
+            if (meta.ResolutionY.HasValue) _tiff.SetField(TiffTag.YRESOLUTION, meta.ResolutionY.Value);
+            if (meta.ResolutionUnit.HasValue)
+                _tiff.SetField(TiffTag.RESOLUTIONUNIT, (int)meta.ResolutionUnit.Value);
+            if (meta.CustomTags != null)
+                foreach (var kv in meta.CustomTags)
+                    _tiff.SetField((TiffTag)kv.Key, kv.Value);
+        }
 
         private string GetCurrentFilePath()
             => _chunkSize.HasValue ? string.Format(_fileNamePattern, _currentChunkIdx) : _fileNamePattern;
