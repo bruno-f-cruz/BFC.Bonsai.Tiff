@@ -32,8 +32,8 @@ namespace BFC.Bonsai.Tiff.IO
         /// <summary>Gets or sets the number of rows per strip. <see langword="null"/> writes the whole image as one strip.</summary>
         public int? RowsPerStrip { get; set; }
 
-        /// <summary>Gets or sets tile dimensions for tiled output. <see langword="null"/> uses strip layout.</summary>
-        public TileSize? Tiles { get; set; }
+        /// <summary>Gets or sets tile dimensions for tiled output. <see langword="null"/> or a disabled <see cref="TileSize"/> uses strip layout.</summary>
+        public TileSize Tiles { get; set; }
 
         /// <summary>Gets or sets the compression predictor. Only effective with LZW or Deflate compression.</summary>
         public TiffPredictor Predictor { get; set; } = TiffPredictor.None;
@@ -124,8 +124,9 @@ namespace BFC.Bonsai.Tiff.IO
             var bytesPerPixel = (bitsPerSample / 8) * channels;
             var rowBytes = width * bytesPerPixel;
 
-            if (Tiles.HasValue)
+            if (Tiles != null && Tiles.IsEnabled)
             {
+                Tiles.Validate();
                 WriteTiled(image, width, height, rowBytes, bytesPerPixel);
             }
             else
@@ -193,7 +194,7 @@ namespace BFC.Bonsai.Tiff.IO
 
         private void WriteTiled(IplImage image, int width, int height, int rowBytes, int bytesPerPixel)
         {
-            var tile = Tiles!.Value;
+            var tile = Tiles!;
             _tiff.SetField(TiffTag.TILEWIDTH, tile.Width);
             _tiff.SetField(TiffTag.TILELENGTH, tile.Height);
 
