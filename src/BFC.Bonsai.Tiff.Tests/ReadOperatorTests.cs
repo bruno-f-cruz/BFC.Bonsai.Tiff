@@ -78,6 +78,79 @@ namespace BFC.Bonsai.Tiff.Tests
             new TiffReader { FileName = path }.Process().Subscribe(_ => { }, () => completed = true).Dispose();
             Assert.IsTrue(completed);
         }
+
+        [TestMethod]
+        public void TiffReader_StartPageIndex_SkipsLeadingPages()
+        {
+            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".tiff");
+            using (var w = new TiffStreamWriter(path, false, Compression.NONE, TiffWriteMode.CreateNew, null))
+                for (int i = 0; i < 5; i++) w.WriteFrame(TestImages.Gray8(4, 4, (byte)i));
+
+            var op = new TiffReader { FileName = path, StartPageIndex = 2 };
+            var results = op.Process().ToList().Wait();
+            Assert.AreEqual(3, results.Count);
+            CollectionAssert.AreEqual(
+                TestImages.ToPackedBytes(TestImages.Gray8(4, 4, 2)),
+                TestImages.ToPackedBytes(results[0]));
+        }
+
+        [TestMethod]
+        public void TiffReader_Triggered_EmitsOnePagePerTick_AdvancingFromStart()
+        {
+            var path = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString("N") + ".tiff");
+            using (var w = new TiffStreamWriter(path, false, Compression.NONE, TiffWriteMode.CreateNew, null))
+                for (int i = 0; i < 5; i++) w.WriteFrame(TestImages.Gray8(4, 4, (byte)(i * 10)));
+
+            var op = new TiffReader { FileName = path, StartPageIndex = 1 };
+            var results = op.Process(Observable.Range(0, 3)).ToList().Wait();
+
+            Assert.AreEqual(3, results.Count);
+            CollectionAssert.AreEqual(TestImages.ToPackedBytes(TestImages.Gray8(4, 4, 10)), TestImages.ToPackedBytes(results[0]));
+            CollectionAssert.AreEqual(TestImages.ToPackedBytes(TestImages.Gray8(4, 4, 20)), TestImages.ToPackedBytes(results[1]));
+            CollectionAssert.AreEqual(TestImages.ToPackedBytes(TestImages.Gray8(4, 4, 30)), TestImages.ToPackedBytes(results[2]));
+        }
+    }
+
+    [TestClass]
+    public class CreateTiffMetadataTests
+    {
+        [TestMethod]
+        public void CreateTiffMetadata_AsSource_EmitsSingleConfiguredInstance()
+        {
+            var op = new CreateTiffMetadata
+            {
+                Description = "desc",
+                Artist = "alice",
+                ResolutionX = 300f,
+                ResolutionY = 300f,
+                ResolutionUnit = TiffResolutionUnit.Inch
+            };
+
+            var results = op.Process().ToList().Wait();
+            Assert.AreEqual(1, results.Count);
+            Assert.AreEqual("desc", results[0].Description);
+            Assert.AreEqual("alice", results[0].Artist);
+            Assert.AreEqual(300f, results[0].ResolutionX);
+            Assert.AreEqual(TiffResolutionUnit.Inch, results[0].ResolutionUnit);
+        }
+
+        [TestMethod]
+        public void CreateTiffMetadata_Triggered_EmitsOnePerTick()
+        {
+            var op = new CreateTiffMetadata { Description = "x" };
+            var results = op.Process(Observable.Range(0, 4)).ToList().Wait();
+            Assert.AreEqual(4, results.Count);
+            foreach (var m in results)
+                Assert.AreEqual("x", m.Description);
+        }
+
+        [TestMethod]
+        public void CreateTiffMetadata_EachTick_ReturnsNewInstance()
+        {
+            var op = new CreateTiffMetadata();
+            var results = op.Process(Observable.Range(0, 2)).ToList().Wait();
+            Assert.AreNotSame(results[0], results[1]);
+        }
     }
 
     [TestClass]
