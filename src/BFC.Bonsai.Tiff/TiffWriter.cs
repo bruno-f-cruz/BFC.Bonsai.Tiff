@@ -80,6 +80,18 @@ namespace BFC.Bonsai.Tiff
             set { chunkSize = value; }
         }
 
+        /// <summary>Gets or sets the number of rows per strip. <see langword="null"/> writes the whole image as one strip.</summary>
+        [Description("Number of rows per TIFF strip. Leave null for a single strip per frame.")]
+        public int? RowsPerStrip { get; set; }
+
+        /// <summary>Gets or sets tile dimensions for tiled TIFF output. <see langword="null"/> uses strip layout.</summary>
+        [Description("Tile dimensions for tiled TIFF output (width and height must be multiples of 16). Leave null for strip-based output.")]
+        public TileSize? Tiles { get; set; }
+
+        /// <summary>Gets or sets the compression predictor. Only effective with LZW or Deflate compression.</summary>
+        [Description("Compression predictor. Horizontal is effective for LZW/Deflate on image data; FloatingPoint for float images.")]
+        public TiffPredictor Predictor { get; set; } = TiffPredictor.None;
+
         /// <summary>
         /// Writes each <see cref="IplImage"/> in <paramref name="source"/> as a page in a multi-page TIFF file
         /// and passes each image downstream unchanged.
@@ -91,9 +103,13 @@ namespace BFC.Bonsai.Tiff
         public IObservable<IplImage> Process(IObservable<IplImage> source)
         {
             return Observable.Using(
-                () => new IO.TiffStreamWriter(fileName, useBigTiff, compression, writeMode, chunkSize),
+                () => new IO.TiffStreamWriter(fileName, useBigTiff, compression, writeMode, chunkSize)
+                {
+                    RowsPerStrip = RowsPerStrip,
+                    Tiles = Tiles,
+                    Predictor = Predictor
+                },
                 writer => source.Do(writer.WriteFrame));
         }
     }
 }
-
