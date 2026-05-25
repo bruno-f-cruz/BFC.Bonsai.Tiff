@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Drawing.Design;
 using System.Reactive.Linq;
 using Bonsai;
 using OpenCV.Net;
@@ -14,6 +15,8 @@ namespace BFC.Bonsai.Tiff
     {
         /// <summary>Gets or sets the path to the TIFF file to read.</summary>
         [Description("The path to the TIFF file.")]
+        [FileNameFilter("TIFF Files|*.tif;*.tiff|All Files|*.*")]
+        [Editor("Bonsai.Design.OpenFileNameEditor, Bonsai.Design", typeof(UITypeEditor))]
         public string FileName { get; set; } = string.Empty;
 
         /// <summary>Gets or sets the zero-based page index to read.</summary>

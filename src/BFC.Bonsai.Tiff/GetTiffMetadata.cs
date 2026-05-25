@@ -1,5 +1,6 @@
-using System;
+﻿using System;
 using System.ComponentModel;
+using System.Drawing.Design;
 using System.Reactive.Linq;
 using Bonsai;
 using BFC.Bonsai.Tiff.IO;
@@ -9,11 +10,13 @@ namespace BFC.Bonsai.Tiff
     /// <summary>Returns metadata tags from a TIFF page without decoding pixels.</summary>
     [Combinator]
     [Description("Returns TiffMetadata for the specified page on each upstream notification, without decoding pixels.")]
-    [WorkflowElementCategory(ElementCategory.Transform)]
+    [WorkflowElementCategory(ElementCategory.Source)]
     public class GetTiffMetadata
     {
         /// <summary>Gets or sets the path to the TIFF file.</summary>
         [Description("The path to the TIFF file.")]
+        [FileNameFilter("TIFF Files|*.tif;*.tiff|All Files|*.*")]
+        [Editor("Bonsai.Design.OpenFileNameEditor, Bonsai.Design", typeof(UITypeEditor))]
         public string FileName { get; set; } = string.Empty;
 
         /// <summary>Gets or sets the zero-based page index to inspect.</summary>
