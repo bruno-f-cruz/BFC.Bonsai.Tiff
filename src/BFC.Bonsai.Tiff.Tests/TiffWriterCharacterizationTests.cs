@@ -120,24 +120,24 @@ public class TiffWriterCharacterizationTests
 
     [TestMethod]
     [ExpectedException(typeof(InvalidOperationException))]
-    public void Overwrite_False_ThrowsWhenFileExists()
+    public void WriteMode_CreateNew_ThrowsWhenFileExists()
     {
         using var tmp = TempTiff.New();
         File.WriteAllText(tmp.Path, "existing");
 
         WriteViaOperator(
-            new TiffWriter { FileName = tmp.Path, Overwrite = false },
+            new TiffWriter { FileName = tmp.Path, WriteMode = TiffWriteMode.CreateNew },
             TestImages.Gray8(4, 4));
     }
 
     [TestMethod]
-    public void Overwrite_True_Succeeds()
+    public void WriteMode_Overwrite_Succeeds()
     {
         using var tmp = TempTiff.New();
         File.WriteAllText(tmp.Path, "existing");
 
         WriteViaOperator(
-            new TiffWriter { FileName = tmp.Path, Overwrite = true },
+            new TiffWriter { FileName = tmp.Path, WriteMode = TiffWriteMode.Overwrite },
             TestImages.Gray8(4, 4));
 
         Assert.AreEqual(1, GetPageCount(tmp.Path));
