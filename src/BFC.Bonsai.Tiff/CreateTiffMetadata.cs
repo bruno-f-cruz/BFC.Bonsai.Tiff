@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Drawing.Design;
 using System.Reactive.Linq;
 using Bonsai;
 
@@ -52,6 +53,7 @@ namespace BFC.Bonsai.Tiff
 
         /// <summary>Date and time of image creation. Leave blank to omit (use upstream value).</summary>
         [Description("Date and time of image creation. Leave blank to omit.")]
+        [Editor("System.ComponentModel.Design.DateTimeEditor, System.Design", typeof(UITypeEditor))]
         public DateTime? DateTime { get; set; }
 
         /// <summary>Emits a single <see cref="TiffMetadata"/> built from the configured property values.</summary>
