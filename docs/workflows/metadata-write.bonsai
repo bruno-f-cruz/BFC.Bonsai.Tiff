@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<WorkflowBuilder Version="2.9.0"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xmlns:rx="clr-namespace:Bonsai.Reactive;assembly=Bonsai.Core"
+                 xmlns:tiff="clr-namespace:BFC.Bonsai.Tiff;assembly=BFC.Bonsai.Tiff"
+                 xmlns="https://bonsai-rx.org/2018/workflow">
+  <Workflow>
+    <Nodes>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="tiff:LoadTiff">
+          <tiff:FileName>image.tif</tiff:FileName>
+          <tiff:PageIndex>0</tiff:PageIndex>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="tiff:CreateTiffMetadata">
+          <tiff:Description>Sample frame</tiff:Description>
+          <tiff:Artist>Acquisition Rig</tiff:Artist>
+          <tiff:Software>Bonsai</tiff:Software>
+          <tiff:ResolutionX>300</tiff:ResolutionX>
+          <tiff:ResolutionY>300</tiff:ResolutionY>
+          <tiff:ResolutionUnit>Inch</tiff:ResolutionUnit>
+        </Combinator>
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="rx:Zip" />
+      </Expression>
+      <Expression xsi:type="Combinator">
+        <Combinator xsi:type="tiff:SaveTiff">
+          <tiff:FileName>tagged.tif</tiff:FileName>
+          <tiff:UseBigTiff>false</tiff:UseBigTiff>
+          <tiff:Compression>LZW</tiff:Compression>
+          <tiff:WriteMode>Overwrite</tiff:WriteMode>
+        </Combinator>
+      </Expression>
+    </Nodes>
+    <Edges>
+      <Edge From="0" To="2" Label="Source1" />
+      <Edge From="1" To="2" Label="Source2" />
+      <Edge From="2" To="3" Label="Source1" />
+    </Edges>
+  </Workflow>
+</WorkflowBuilder>

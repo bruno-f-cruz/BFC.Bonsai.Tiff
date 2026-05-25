@@ -1,2 +1,8 @@
 - name: Introduction
   href: ../index.md
+- name: Reading
+  href: reading.md
+- name: Writing
+  href: writing.md
+- name: Metadata
+  href: metadata.md
