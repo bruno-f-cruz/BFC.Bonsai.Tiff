@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using BitMiracle.LibTiff.Classic;
@@ -268,7 +268,7 @@ namespace BFC.Bonsai.Tiff.IO
 
             _tiff = BitMiracle.LibTiff.Classic.Tiff.Open(path, mode);
             if (_tiff == null)
-                throw new TiffException(string.Format("Failed to create TIFF file: {0}", path));
+                throw new InvalidOperationException(string.Format("Failed to create TIFF file: {0}", path));
             _currentFrameIdx = _writeMode == TiffWriteMode.Append ? _tiff.NumberOfDirectories() : 0;
         }
 

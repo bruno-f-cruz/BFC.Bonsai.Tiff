@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using BitMiracle.LibTiff.Classic;
@@ -21,11 +21,11 @@ namespace BFC.Bonsai.Tiff.IO
         private readonly int _pageCount;
 
         /// <summary>Opens a TIFF file for reading.</summary>
-        /// <exception cref="TiffException">Thrown if the file cannot be opened.</exception>
+        /// <exception cref="InvalidOperationException">Thrown if the file cannot be opened.</exception>
         public TiffStreamReader(string path)
         {
             _tiff = LibTiffClass.Open(path, "r")
-                ?? throw new TiffException(string.Format("Failed to open TIFF file: {0}", path));
+                ?? throw new InvalidOperationException(string.Format("Failed to open TIFF file: {0}", path));
             _pageCount = _tiff.NumberOfDirectories();
         }
 
