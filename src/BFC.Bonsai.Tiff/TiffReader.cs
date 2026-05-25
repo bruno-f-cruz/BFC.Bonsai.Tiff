@@ -1,15 +1,24 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Drawing.Design;
+using System.Linq;
 using System.Reactive.Linq;
 using Bonsai;
 using OpenCV.Net;
 
 namespace BFC.Bonsai.Tiff
 {
-    /// <summary>Emits one <see cref="IplImage"/> per page of a TIFF file in order, then completes.</summary>
+    /// <summary>
+    /// Reads pages from a TIFF stack as <see cref="IplImage"/> values.
+    /// </summary>
+    /// <remarks>
+    /// When connected as a pure source (no upstream), all pages from <see cref="StartPageIndex"/>
+    /// to the end of the file are emitted in order and the sequence completes.
+    /// When triggered by an upstream sequence, one page is emitted per upstream notification,
+    /// starting at <see cref="StartPageIndex"/> and advancing through the file.
+    /// </remarks>
     [Combinator]
-    [Description("Emits one IplImage per page of a TIFF file in order, then completes.")]
+    [Description("Reads pages from a TIFF file. As a source, emits all pages from StartPageIndex to end. When triggered, emits one page per upstream notification, advancing through the file.")]
     [WorkflowElementCategory(ElementCategory.Source)]
     public class TiffReader
     {
@@ -19,10 +28,30 @@ namespace BFC.Bonsai.Tiff
         [Editor("Bonsai.Design.OpenFileNameEditor, Bonsai.Design", typeof(UITypeEditor))]
         public string FileName { get; set; } = string.Empty;
 
-        /// <summary>Reads all pages sequentially and emits each as an <see cref="IplImage"/>.</summary>
+        /// <summary>Gets or sets the zero-based index of the first page to read.</summary>
+        [Description("Zero-based index of the first page to read.")]
+        public int StartPageIndex { get; set; } = 0;
+
+        /// <summary>Reads pages from <see cref="StartPageIndex"/> to the end, then completes.</summary>
         public IObservable<IplImage> Process() =>
             Observable.Using(
                 () => new IO.TiffStreamReader(FileName),
-                reader => reader.ReadAllPages().ToObservable());
+                reader => Enumerable.Range(StartPageIndex, Math.Max(0, reader.PageCount - StartPageIndex))
+                                    .Select(reader.ReadPage)
+                                    .ToObservable());
+
+        /// <summary>
+        /// Reads one page per upstream notification, starting at <see cref="StartPageIndex"/>
+        /// and advancing one page per tick. Errors if the file runs out of pages.
+        /// </summary>
+        public IObservable<IplImage> Process<TSource>(IObservable<TSource> source) =>
+            Observable.Defer(() =>
+            {
+                int pageIndex = StartPageIndex;
+                return Observable.Using(
+                    () => new IO.TiffStreamReader(FileName),
+                    reader => source.Select(_ => reader.ReadPage(pageIndex++)));
+            });
     }
 }
+
