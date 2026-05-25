@@ -1,0 +1,10 @@
+<Project>
+  <PropertyGroup>
+    <Authors></Authors>
+    <Copyright>Copyright © </Copyright>
+    <PackageProjectUrl></PackageProjectUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageLicenseFile></PackageLicenseFile>
+    <PackageIcon></PackageIcon>
+  </PropertyGroup>
+</Project>
