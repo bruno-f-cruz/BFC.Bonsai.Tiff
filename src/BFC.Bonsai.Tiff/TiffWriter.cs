@@ -1,15 +1,12 @@
-﻿using Bonsai;
+using Bonsai;
 using System;
 using System.ComponentModel;
-using System.IO;
 using System.Reactive.Linq;
-using System.Runtime.InteropServices;
 using OpenCV.Net;
 using BitMiracle.LibTiff.Classic;
 
 namespace BFC.Bonsai.Tiff
 {
-
     /// <summary>
     /// Writes a sequence of <see cref="IplImage"/> frames to a multi-page TIFF stack file.
     /// </summary>
@@ -29,9 +26,7 @@ namespace BFC.Bonsai.Tiff
         private bool overwrite = false;
         private int? chunkSize = null;
 
-        /// <summary>
-        /// Gets or sets the path to the output TIFF file.
-        /// </summary>
+        /// <summary>Gets or sets the path to the output TIFF file.</summary>
         [Description("The path to the output file.")]
         public string FileName
         {
@@ -42,9 +37,7 @@ namespace BFC.Bonsai.Tiff
         /// <summary>
         /// Gets or sets a value indicating whether to use BigTIFF format.
         /// </summary>
-        /// <remarks>
-        /// BigTIFF removes the 4 GB file size limit of standard TIFF. Enabled by default.
-        /// </remarks>
+        /// <remarks>BigTIFF removes the 4 GB file size limit of standard TIFF. Enabled by default.</remarks>
         [Description("Specifies whether to use BigTIFF format.")]
         public bool UseBigTiff
         {
@@ -52,9 +45,7 @@ namespace BFC.Bonsai.Tiff
             set { useBigTiff = value; }
         }
 
-        /// <summary>
-        /// Gets or sets the compression algorithm applied to each frame.
-        /// </summary>
+        /// <summary>Gets or sets the compression algorithm applied to each frame.</summary>
         [Description("The compression algorithm to use.")]
         public Compression Compression
         {
@@ -76,9 +67,7 @@ namespace BFC.Bonsai.Tiff
             set { overwrite = value; }
         }
 
-        /// <summary>
-        /// Gets or sets the number of frames per chunk file.
-        /// </summary>
+        /// <summary>Gets or sets the number of frames per chunk file.</summary>
         /// <remarks>
         /// When set, the writer operates in rolling mode: after every <c>ChunkSize</c> frames the current
         /// file is closed and a new one is opened with a zero-padded four-digit suffix
@@ -98,229 +87,14 @@ namespace BFC.Bonsai.Tiff
         /// </summary>
         /// <param name="source">A sequence of images to write.</param>
         /// <returns>
-        /// A sequence that is identical to <paramref name="source"/>, produced as a side-effect of
-        /// writing each frame to the TIFF file.
+        /// A sequence identical to <paramref name="source"/>, produced as a side-effect of writing each frame.
         /// </returns>
         public IObservable<IplImage> Process(IObservable<IplImage> source)
         {
             return Observable.Using(
-                () => new TiffStackWriter(fileName, useBigTiff, compression, overwrite, chunkSize),
-                writer =>
-                {
-                    return source.Do(image => writer.WriteFrame(image));
-                });
-        }
-
-        private class TiffStackWriter : IDisposable
-        {
-            private BitMiracle.LibTiff.Classic.Tiff tiffStack;
-            private int currentFrameIdx;
-            private int currentChunkIdx;
-            private byte[] rowBuffer; // reusable buffer
-            private byte[] stripBuffer; // reusable buffer
-
-            private readonly string fileNamePattern;
-            private readonly bool useBigTiff;
-            private readonly Compression compression;
-            private readonly bool overwrite;
-            private readonly int? chunkSize;
-
-            public TiffStackWriter(string path, bool useBigTiff, Compression compression, bool overwrite, int? chunkSize)
-            {
-                this.useBigTiff = useBigTiff;
-                this.compression = compression;
-                this.overwrite = overwrite;
-                this.chunkSize = chunkSize;
-
-                // Determine the file name pattern for chunked mode
-                if (chunkSize.HasValue)
-                {
-                    var directory = Path.GetDirectoryName(path);
-                    var baseName = Path.GetFileNameWithoutExtension(path);
-                    var extension = Path.GetExtension(path);
-                    fileNamePattern = string.IsNullOrEmpty(directory)
-                        ? string.Format("{0}_{{0:D4}}{1}", baseName, extension)
-                        : Path.Combine(directory, string.Format("{0}_{{0:D4}}{1}", baseName, extension));
-                }
-                else
-                {
-                    fileNamePattern = path;
-                }
-
-                currentFrameIdx = 0;
-                currentChunkIdx = 0;
-                rowBuffer = null;
-
-                OpenNewFile();
-            }
-
-            private string GetCurrentFilePath()
-            {
-                if (chunkSize.HasValue)
-                {
-                    return string.Format(fileNamePattern, currentChunkIdx);
-                }
-                return fileNamePattern;
-            }
-
-            private void OpenNewFile()
-            {
-                var path = GetCurrentFilePath();
-                if (!overwrite && File.Exists(path))
-                {
-                    throw new InvalidOperationException(string.Format("File already exists: {0}", path));
-                }
-
-                var directory = Path.GetDirectoryName(path);
-                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                }
-
-                var mode = useBigTiff ? "w8" : "w";
-                tiffStack = BitMiracle.LibTiff.Classic.Tiff.Open(path, mode);
-                if (tiffStack == null)
-                {
-                    throw new InvalidOperationException(string.Format("Failed to create TIFF file: {0}", path));
-                }
-                currentFrameIdx = 0;
-            }
-
-            private void CloseCurrentFile()
-            {
-                if (tiffStack != null)
-                {
-                    tiffStack.Dispose();
-                    tiffStack = null;
-                }
-            }
-
-            public void WriteFrame(IplImage image)
-            {
-                if (chunkSize.HasValue && currentFrameIdx >= chunkSize.Value)
-                {
-                    CloseCurrentFile();
-                    currentChunkIdx++;
-                    OpenNewFile();
-                }
-
-                var width = image.Width;
-                var height = image.Height;
-                var channels = image.Channels;
-                var depth = image.Depth;
-
-                int bitsPerSample;
-                SampleFormat sampleFormat;
-                GetTiffSampleInfo(depth, out bitsPerSample, out sampleFormat);
-
-                tiffStack.SetField(TiffTag.IMAGEWIDTH, width);
-                tiffStack.SetField(TiffTag.IMAGELENGTH, height);
-                tiffStack.SetField(TiffTag.SAMPLESPERPIXEL, channels);
-                tiffStack.SetField(TiffTag.BITSPERSAMPLE, bitsPerSample);
-                tiffStack.SetField(TiffTag.SAMPLEFORMAT, sampleFormat);
-                tiffStack.SetField(TiffTag.ORIENTATION, Orientation.TOPLEFT);
-                tiffStack.SetField(TiffTag.PLANARCONFIG, PlanarConfig.CONTIG);
-                tiffStack.SetField(TiffTag.COMPRESSION, compression);
-                tiffStack.SetField(TiffTag.ROWSPERSTRIP, height);
-
-                if (channels == 1)
-                {
-                    tiffStack.SetField(TiffTag.PHOTOMETRIC, Photometric.MINISBLACK);
-                }
-                else if (channels == 3)
-                {
-                    tiffStack.SetField(TiffTag.PHOTOMETRIC, Photometric.RGB);
-                }
-                else if (channels == 4)
-                {
-                    tiffStack.SetField(TiffTag.PHOTOMETRIC, Photometric.RGB);
-                    tiffStack.SetField(TiffTag.EXTRASAMPLES, 1, new short[] { (short)ExtraSample.UNASSALPHA });
-                }
-                else
-                {
-                    tiffStack.SetField(TiffTag.PHOTOMETRIC, Photometric.MINISBLACK);
-                }
-
-                tiffStack.SetField(TiffTag.SUBFILETYPE, FileType.PAGE);
-                tiffStack.SetField(TiffTag.PAGENUMBER, currentFrameIdx, 0);
-
-                var bytesPerPixel = (bitsPerSample / 8) * channels;
-                var rowBytes = width * bytesPerPixel;
-                var widthStep = image.WidthStep;
-
-                if (rowBuffer == null || rowBuffer.Length < rowBytes)
-                {
-                    rowBuffer = new byte[rowBytes];
-                }
-
-                var imageData = image.ImageData;
-
-                if (widthStep == rowBytes)
-                {
-                    var totalBytes = height * rowBytes;
-                    if (stripBuffer == null || stripBuffer.Length < totalBytes)
-                    {
-                        stripBuffer = new byte[totalBytes];
-                    }
-                    Marshal.Copy(imageData, stripBuffer, 0, totalBytes);
-                    tiffStack.WriteEncodedStrip(0, stripBuffer, totalBytes);
-                }
-                else
-                {
-                    for (int row = 0; row < height; row++)
-                    {
-                        var rowPtr = IntPtr.Add(imageData, row * widthStep);
-                        Marshal.Copy(rowPtr, rowBuffer, 0, rowBytes);
-                        tiffStack.WriteScanline(rowBuffer, row);
-                    }
-                }
-
-                tiffStack.WriteDirectory();
-                currentFrameIdx++;
-            }
-
-            public void Dispose()
-            {
-                CloseCurrentFile();
-            }
-
-            private static void GetTiffSampleInfo(IplDepth depth, out int bitsPerSample, out SampleFormat sampleFormat)
-            {
-                switch (depth)
-                {
-                    case IplDepth.U8:
-                        bitsPerSample = 8;
-                        sampleFormat = SampleFormat.UINT;
-                        break;
-                    case IplDepth.S8:
-                        bitsPerSample = 8;
-                        sampleFormat = SampleFormat.INT;
-                        break;
-                    case IplDepth.U16:
-                        bitsPerSample = 16;
-                        sampleFormat = SampleFormat.UINT;
-                        break;
-                    case IplDepth.S16:
-                        bitsPerSample = 16;
-                        sampleFormat = SampleFormat.INT;
-                        break;
-                    case IplDepth.S32:
-                        bitsPerSample = 32;
-                        sampleFormat = SampleFormat.INT;
-                        break;
-                    case IplDepth.F32:
-                        bitsPerSample = 32;
-                        sampleFormat = SampleFormat.IEEEFP;
-                        break;
-                    case IplDepth.F64:
-                        bitsPerSample = 64;
-                        sampleFormat = SampleFormat.IEEEFP;
-                        break;
-                    default:
-                        throw new NotSupportedException(string.Format("Unsupported image depth: {0}", depth));
-                }
-            }
+                () => new IO.TiffStreamWriter(fileName, useBigTiff, compression, overwrite, chunkSize),
+                writer => source.Do(writer.WriteFrame));
         }
     }
-
 }
+
