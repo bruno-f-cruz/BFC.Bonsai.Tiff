@@ -87,9 +87,9 @@ namespace BFC.Bonsai.Tiff
         [Description("Number of rows per TIFF strip. Leave null for a single strip per frame.")]
         public int? RowsPerStrip { get; set; }
 
-        /// <summary>Gets or sets tile dimensions for tiled TIFF output. <see langword="null"/> uses strip layout.</summary>
-        [Description("Tile dimensions for tiled TIFF output (width and height must be multiples of 16). Leave null for strip-based output.")]
-        public TileSize? Tiles { get; set; }
+        /// <summary>Gets or sets tile dimensions for tiled TIFF output. Leave both Width and Height at 0 (the default) to use strip layout.</summary>
+        [Description("Tile dimensions for tiled TIFF output (width and height must be multiples of 16). Leave both at 0 to use strip-based output.")]
+        public TileSize Tiles { get; set; } = new TileSize();
 
         /// <summary>Gets or sets the compression predictor. Only effective with LZW or Deflate compression.</summary>
         [Description("Compression predictor. Horizontal is effective for LZW/Deflate on image data; FloatingPoint for float images.")]
