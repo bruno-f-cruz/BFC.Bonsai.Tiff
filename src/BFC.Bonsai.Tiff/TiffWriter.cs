@@ -111,5 +111,21 @@ namespace BFC.Bonsai.Tiff
                 },
                 writer => source.Do(writer.WriteFrame));
         }
+
+        /// <summary>
+        /// Writes each <see cref="Tuple{IplImage, TiffMetadata}"/> as a page with per-frame metadata.
+        /// </summary>
+        public IObservable<Tuple<IplImage, TiffMetadata>> Process(
+            IObservable<Tuple<IplImage, TiffMetadata>> source)
+        {
+            return Observable.Using(
+                () => new IO.TiffStreamWriter(fileName, useBigTiff, compression, writeMode, chunkSize)
+                {
+                    RowsPerStrip = RowsPerStrip,
+                    Tiles = Tiles,
+                    Predictor = Predictor
+                },
+                writer => source.Do(item => writer.WriteFrame(item.Item1, item.Item2)));
+        }
     }
 }
