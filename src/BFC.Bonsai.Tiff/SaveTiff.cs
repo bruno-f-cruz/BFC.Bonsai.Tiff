@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Drawing.Design;
 using System.Reactive.Linq;
 using BitMiracle.LibTiff.Classic;
 using Bonsai;
@@ -18,6 +19,8 @@ namespace BFC.Bonsai.Tiff
     {
         /// <summary>Gets or sets the path to the output TIFF file.</summary>
         [Description("The path to the output TIFF file.")]
+        [FileNameFilter("TIFF Files|*.tif;*.tiff|All Files|*.*")]
+        [Editor("Bonsai.Design.SaveFileNameEditor, Bonsai.Design", typeof(UITypeEditor))]
         public string FileName { get; set; } = string.Empty;
 
         /// <summary>Gets or sets a value indicating whether to use BigTIFF format.</summary>
