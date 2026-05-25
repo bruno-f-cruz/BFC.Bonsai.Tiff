@@ -23,7 +23,7 @@ namespace BFC.Bonsai.Tiff
         private string fileName = string.Empty;
         private bool useBigTiff = true;
         private Compression compression = Compression.NONE;
-        private bool overwrite = false;
+        private TiffWriteMode writeMode = TiffWriteMode.CreateNew;
         private int? chunkSize = null;
 
         /// <summary>Gets or sets the path to the output TIFF file.</summary>
@@ -53,18 +53,17 @@ namespace BFC.Bonsai.Tiff
             set { compression = value; }
         }
 
-        /// <summary>
-        /// Gets or sets a value indicating whether to overwrite the output file if it already exists.
-        /// </summary>
+        /// <summary>Gets or sets how the file is opened for writing.</summary>
         /// <remarks>
-        /// When <see langword="false"/> (the default), an <see cref="InvalidOperationException"/> is thrown
-        /// if the target file already exists.
+        /// <see cref="TiffWriteMode.CreateNew"/> throws if the target file already exists.
+        /// <see cref="TiffWriteMode.Overwrite"/> replaces any existing file.
+        /// <see cref="TiffWriteMode.Append"/> adds pages to an existing file, or creates it if absent.
         /// </remarks>
-        [Description("Specifies whether to overwrite the file if it already exists.")]
-        public bool Overwrite
+        [Description("Specifies whether to create, overwrite, or append to the TIFF file.")]
+        public TiffWriteMode WriteMode
         {
-            get { return overwrite; }
-            set { overwrite = value; }
+            get { return writeMode; }
+            set { writeMode = value; }
         }
 
         /// <summary>Gets or sets the number of frames per chunk file.</summary>
@@ -92,7 +91,7 @@ namespace BFC.Bonsai.Tiff
         public IObservable<IplImage> Process(IObservable<IplImage> source)
         {
             return Observable.Using(
-                () => new IO.TiffStreamWriter(fileName, useBigTiff, compression, overwrite, chunkSize),
+                () => new IO.TiffStreamWriter(fileName, useBigTiff, compression, writeMode, chunkSize),
                 writer => source.Do(writer.WriteFrame));
         }
     }
