@@ -1,13 +1,22 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net472</TargetFrameworks>
+    <OpenCvRuntimeDir>$(NuGetPackageRoot)opencv.net.runtime.win-x64\2.4.13\runtimes\win-x64\native\vc14\bin\</OpenCvRuntimeDir>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="MSTest.TestAdapter" Version="3.3.1" />
     <PackageReference Include="MSTest.TestFramework" Version="3.3.1" />
+    <PackageReference Include="OpenCV.Net.runtime.win-x64" Version="2.4.13" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\BFC.Bonsai.Tiff\BFC.Bonsai.Tiff.csproj" />
   </ItemGroup>
+  <!-- Copy OpenCV native DLLs to output for .NET Framework test runner -->
+  <Target Name="CopyOpenCvNativeDlls" BeforeTargets="Build">
+    <ItemGroup>
+      <OpenCvNativeDll Include="$(OpenCvRuntimeDir)*.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(OpenCvNativeDll)" DestinationFolder="$(OutputPath)" SkipUnchangedFiles="true" />
+  </Target>
 </Project>
