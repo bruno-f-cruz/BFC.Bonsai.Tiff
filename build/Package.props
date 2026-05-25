@@ -1,10 +1,8 @@
 <Project>
   <PropertyGroup>
-    <Authors></Authors>
-    <Copyright>Copyright © </Copyright>
-    <PackageProjectUrl></PackageProjectUrl>
+    <Authors>Bruno F. Cruz</Authors>
+    <Copyright>Copyright © Bruno F. Cruz</Copyright>
+    <PackageProjectUrl>https://github.com/bruno-f-cruz/BFC.Bonsai.Tiff</PackageProjectUrl>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageLicenseFile></PackageLicenseFile>
-    <PackageIcon></PackageIcon>
   </PropertyGroup>
 </Project>

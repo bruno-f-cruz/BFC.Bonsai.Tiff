@@ -1,9 +1,19 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.3.32825.248
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{CB3CA2E5-F0CF-41B7-868C-37B8292A6374}") = "BFC.Bonsai.Tiff", "src\BFC.Bonsai.Tiff\BFC.Bonsai.Tiff.csproj", "{9D141019-46AF-4E79-A566-9F2BD670F6FD}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{DEE5DD87-39C1-BF34-B639-A387DCCF972B}"
+	ProjectSection(SolutionItems) = preProject
+		build\Common.csproj.props = build\Common.csproj.props
+		build\Common.csproj.targets = build\Common.csproj.targets
+		build\Common.Tests.csproj.props = build\Common.Tests.csproj.props
+		build\icon.png = build\icon.png
+		build\Package.props = build\Package.props
+		build\Project.csproj.props = build\Project.csproj.props
+		build\Version.props = build\Version.props
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
