@@ -38,7 +38,7 @@ namespace BFC.Bonsai.Tiff.Tests
         public void TiffReader_AsSource_EmitsPagesFromStartToEnd()
         {
             var path = WriteStack(5);
-            var results = new TiffReader { FileName = path, StartPageIndex = 2 }.Process().ToList().Wait();
+            var results = new TiffReader { FileName = path, PageIndex = 2 }.Process().ToList().Wait();
             Assert.AreEqual(3, results.Count);
         }
 
@@ -46,7 +46,7 @@ namespace BFC.Bonsai.Tiff.Tests
         public void TiffReader_Triggered_EmitsOnePagePerTick_AdvancingFromStart()
         {
             var path = WriteStack(5);
-            var op = new TiffReader { FileName = path, StartPageIndex = 1 };
+            var op = new TiffReader { FileName = path, PageIndex = 1 };
             var results = op.Process(Observable.Range(0, 3)).ToList().Wait();
             CollectionAssert.AreEqual(TestImages.ToPackedBytes(TestImages.Gray8(4, 4, 10)), TestImages.ToPackedBytes(results[0]));
             CollectionAssert.AreEqual(TestImages.ToPackedBytes(TestImages.Gray8(4, 4, 20)), TestImages.ToPackedBytes(results[1]));

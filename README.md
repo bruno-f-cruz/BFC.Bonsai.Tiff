@@ -8,7 +8,7 @@ A Bonsai package for reading and writing TIFF files in scientific image workflow
 |------|----------|-------------|
 | `TiffWriter` | Sink | Writes an image sequence as a multi-page TIFF stack. Supports strip and tiled layout, configurable compression and predictor, and optional per-frame metadata. |
 | `SaveTiff` | Sink | Writes each image as a single-page TIFF file. The file is opened and closed per frame. Useful with property mappings to generate unique filenames. |
-| `TiffReader` | Source | As a source, emits pages from `StartPageIndex` to end of file. When triggered by an upstream sequence, emits one page per tick, advancing through the file. |
+| `TiffReader` | Source | As a source, emits pages from `PageIndex` to end of file. When triggered by an upstream sequence, emits one page per tick, advancing through the file. |
 | `LoadTiff` | Source | Loads a single page from a TIFF file. Re-reads on each upstream trigger. |
 | `CreateTiffMetadata` | Source | Builds a `TiffMetadata` instance from configured property values. Combine with image streams via `Zip` to attach per-frame metadata. |
 | `GetTiffPageInfo` | Transform | Returns `TiffPageInfo` (dimensions, depth, compression) for a page without decoding pixels. |
